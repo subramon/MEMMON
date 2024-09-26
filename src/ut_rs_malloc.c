@@ -1,16 +1,23 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "q_macros.h"
 #include "rs_malloc.h"
 
 mmon_t g_mmon;
 
+#define USE_MEMMON
+#ifdef USE_MEMMON
+#define malloc(x) { rs_malloc(x, __FILE__, __LINE__, __FUNCTION__, "") }
+#define free(x)   { rs_free(x); }
+#endif
+  
 int
 foo(
     )
 {
   int status = 0;
-  char *X = Xmalloc(16, "label");
-  rs_free(X);
+  char *X = malloc(16); 
+  free(X);
   return status;
 }
 
