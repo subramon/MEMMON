@@ -43,7 +43,8 @@ rs_free(
   size_t sz = 0;
   // Check if X is valid pointer. 
   sprintf(lcmd, "assert(Tmallocs[%" PRIu64 "])", (uint64_t)X);
-  lexec(L, lcmd); 
+  lexec(L, lcmd);  cBYE(status);
+  lexec(L, " for k1, v1 in pairs(Tmallocs) do for k2, v2 in pairs(v1) do print(k1, k2, v2) end end "); cBYE(status);
   //-- Get the size of the memory pointed to by this pointer 
   // Put lua function get_size() on stack 
   int chk = lua_gettop(L); if ( chk != 0 ) { go_BYE(-1); }
@@ -101,7 +102,7 @@ rs_malloc(
   g_mmon.num_malloc++;
   g_mmon.sz_malloc += sz;
   sprintf(lcmd, "assert(not Tmallocs[%" PRIu64 "])", (uint64_t)X);
-  lexec(L, lcmd); 
+  lexec(L, lcmd);  cBYE(status);
   sprintf(lcmd, "t = {}"); 
   lexec(L, lcmd); 
   sprintf(lcmd, "t.size = %" PRIu64 "", sz); 
@@ -138,14 +139,19 @@ init_mmon(
   char lcmd[1024]; memset(lcmd, 0, 1024);  // commands to Lua 
 
   strcpy(lcmd, "Tmallocs = {}");
-  lexec(L, lcmd);
+  lexec(L, lcmd); cBYE(status); 
 
   strcpy(lcmd, " get_size = function(x) ");
   strcat(lcmd, "   assert(type(x) == \"number\")");
   strcat(lcmd, "   local t = assert(Tmallocs[x])");
-  strcat(lcmd, "   return t.size");
+  strcat(lcmd, "   assert(type(t) == \"table\")");
+  strcat(lcmd, "   local sz = assert(t.size)");
+  strcat(lcmd, "   assert(type(sz) == \"number\")");
+  strcat(lcmd, "   return sz");
   strcat(lcmd, " end");
-  lexec(L, lcmd);
+  lexec(L, lcmd); cBYE(status);
+  lexec(L, "assert(type(get_size) == \"function\")"); cBYE(status);
+  // printf("INIT DONE \n");
 
   int chk = lua_gettop(L); 
   ptr_M->L =L;
