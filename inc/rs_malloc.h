@@ -4,6 +4,7 @@
 #include "lualib.h"
 #include "lauxlib.h"
 #include <stdint.h>
+#include "cat_to_buf.h"
 
 typedef struct _mmon_t {
   lua_State *L;
@@ -51,5 +52,15 @@ prnt_mmon(
 extern int 
 free_mmon(
     mmon_t *ptr_M
+    );
+extern int 
+dump_mmon(
+    mmon_t *ptr_M,
+    const char * const file_name
+    );
+extern int 
+stat_mmon(
+    mmon_t *ptr_M,
+    const char * const file_name
     );
 #endif //  _RS_MALLOC_H

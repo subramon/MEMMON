@@ -1,3 +1,6 @@
+/*
+gcc -g -std=gnu99 ut_rs_malloc.c ../../RSUTILS/src/cat_to_buf.c rs_malloc.c -I../..//RSUTILS/inc/   /usr/local/lib/libluajit-5.1.so -I../inc/ -I../../RSUTILS/inc/
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include "q_macros.h"
@@ -29,9 +32,13 @@ main(
 {
   int status = 0;
   status = init_mmon(&g_mmon); cBYE(status);
+  for ( int i = 0; i < 10; i++ ) { 
   status = foo(); cBYE(status);
+  }
   status = chck_mmon(&g_mmon); cBYE(status);
   status = prnt_mmon(&g_mmon); cBYE(status);
+  status = dump_mmon(&g_mmon, "_mmon.json"); cBYE(status);
+  status = stat_mmon(&g_mmon, "_stat.json"); cBYE(status);
   status = free_mmon(&g_mmon); cBYE(status);
   printf("SUCCESS\n");
 BYE:

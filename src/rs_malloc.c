@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
@@ -13,10 +14,11 @@ extern mmon_t g_mmon;
 //-- START: Load as few libraries as possible
 static const luaL_Reg lualibs[] = {
   {"", luaopen_base},
-//  {LUA_LOADLIBNAME, luaopen_package},
-//  {LUA_TABLIBNAME, luaopen_table},
+  {LUA_LOADLIBNAME, luaopen_package},
+  {LUA_TABLIBNAME, luaopen_table},
   {LUA_STRLIBNAME, luaopen_string},
-//  {LUA_MATHLIBNAME, luaopen_math},
+  {LUA_STRLIBNAME, luaopen_io},
+  {LUA_MATHLIBNAME, luaopen_math},
 //  {LUA_DBLIBNAME, luaopen_debug},
   {NULL, NULL}
 };
@@ -44,24 +46,23 @@ rs_free(
   // Check if X is valid pointer. 
   sprintf(lcmd, "assert(Tmallocs[%" PRIu64 "])", (uint64_t)X);
   lexec(L, lcmd);  cBYE(status);
-  lexec(L, " for k1, v1 in pairs(Tmallocs) do for k2, v2 in pairs(v1) do print(k1, k2, v2) end end "); cBYE(status);
   //-- Get the size of the memory pointed to by this pointer 
-  // Put lua function get_size() on stack 
+  // Put lua function lua_free() on stack 
   int chk = lua_gettop(L); if ( chk != 0 ) { go_BYE(-1); }
-  lua_getglobal(L, "get_size");
+  lua_getglobal(L, "lua_free");
   chk = lua_gettop(L); if ( chk != 1 ) { go_BYE(-1); }
   if ( !lua_isfunction(L, -1)) {
-    fprintf(stderr, "Lua Function get_size() undefined\n");
+    fprintf(stderr, "Lua Function lua_free() undefined\n");
     lua_pop(L, 1);
     go_BYE(-1);
   }
-  // Push argument to get_size() on stack 
+  // Push argument to lua_free() on stack 
   lua_pushnumber(L, (uint64_t)X);
   chk = lua_gettop(L); if ( chk != 2 ) { go_BYE(-1); }
   // call lua function and check status 
   status = lua_pcall(L, 1, 1, 0);
   if ( status != 0 ) {
-    fprintf(stderr, "fn get_size() failed: %s\n", lua_tostring(L, -1));
+    fprintf(stderr, "fn lua_free() failed: %s\n", lua_tostring(L, -1));
     lua_pop(L, 1);
     go_BYE(-1); 
   }
@@ -141,16 +142,29 @@ init_mmon(
   strcpy(lcmd, "Tmallocs = {}");
   lexec(L, lcmd); cBYE(status); 
 
-  strcpy(lcmd, " get_size = function(x) ");
+  strcpy(lcmd, " lua_free = function(x) ");
   strcat(lcmd, "   assert(type(x) == \"number\")");
   strcat(lcmd, "   local t = assert(Tmallocs[x])");
   strcat(lcmd, "   assert(type(t) == \"table\")");
   strcat(lcmd, "   local sz = assert(t.size)");
   strcat(lcmd, "   assert(type(sz) == \"number\")");
+  strcat(lcmd, "   Tmallocs[x] = nil ");
   strcat(lcmd, "   return sz");
   strcat(lcmd, " end");
   lexec(L, lcmd); cBYE(status);
-  lexec(L, "assert(type(get_size) == \"function\")"); cBYE(status);
+  lexec(L, "assert(type(lua_free) == \"function\")"); cBYE(status);
+  //-------------------------
+  strcpy(lcmd, " dump_mmon = function(file_name) ");
+  strcat(lcmd, "   assert(type(file_name) == 'string')");
+  strcat(lcmd, "   local dkj = require('dkjson') "); 
+  strcat(lcmd, "   local y = dkj.encode(Tmallocs) ");
+  strcat(lcmd, "   local fp = assert(io.open(file_name, 'w')) "); 
+  strcat(lcmd, "   fp:write(y) ");
+  strcat(lcmd, "   fp:close() ");
+  strcat(lcmd, "   return true");
+  strcat(lcmd, " end");
+  lexec(L, lcmd); cBYE(status);
+  lexec(L, "assert(type(dump_mmon) == \"function\")"); cBYE(status);
   // printf("INIT DONE \n");
 
   int chk = lua_gettop(L); 
@@ -199,6 +213,89 @@ free_mmon(
     lua_close(ptr_M->L);
   }
   memset(ptr_M, 0, sizeof(mmon_t));
+BYE:
+  return status;
+}
+
+int 
+stat_mmon(
+    mmon_t *ptr_M,
+    const char * const file_name
+    )
+{
+  int status = 0;
+  char *buf = NULL; uint32_t sz = 0, len = 0;
+  char lbuf[128];
+  FILE *fp = NULL; 
+  if ( ptr_M == NULL ) { go_BYE(-1); }
+  if ( file_name == NULL ) { go_BYE(-1); }
+  fp = fopen(file_name, "w"); 
+  return_if_fopen_failed(fp,  file_name, "w"); 
+
+
+  status = cat_to_buf(&buf, &sz, &len, "{", 0); cBYE(status);
+
+  sprintf(lbuf, "\"sz_malloc\" : %" PRIu64 ", ", ptr_M->sz_malloc); 
+  status = cat_to_buf(&buf, &sz, &len, lbuf, 0); cBYE(status);
+
+  sprintf(lbuf, "\"sz_free\" : %" PRIu64 ", ", ptr_M->sz_free); 
+  status = cat_to_buf(&buf, &sz, &len, lbuf, 0); cBYE(status);
+
+  sprintf(lbuf, "\"num_malloc\" : %" PRIu64 ", ", ptr_M->num_malloc); 
+  status = cat_to_buf(&buf, &sz, &len, lbuf, 0); cBYE(status);
+
+  sprintf(lbuf, "\"num_free\" : %" PRIu64 "", ptr_M->num_free); 
+  status = cat_to_buf(&buf, &sz, &len, lbuf, 0); cBYE(status);
+
+  status = cat_to_buf(&buf, &sz, &len, "}", 0); cBYE(status);
+  fprintf(fp, "%s\n", buf);
+
+
+BYE:
+  fclose_if_non_null(fp);
+  free_if_non_null(buf);
+  return status;
+}
+
+int 
+dump_mmon(
+    mmon_t *ptr_M,
+    const char * const file_name
+    )
+{
+  int status = 0;
+  if ( ptr_M == NULL ) { go_BYE(-1); }
+  if ( file_name == NULL ) { go_BYE(-1); }
+  lua_State *L = ptr_M->L;
+
+  // Put lua function dump_mmon() on stack 
+  int chk = lua_gettop(L); if ( chk != 0 ) { go_BYE(-1); }
+  lua_getglobal(L, "dump_mmon");
+  chk = lua_gettop(L); if ( chk != 1 ) { go_BYE(-1); }
+  if ( !lua_isfunction(L, -1)) {
+    fprintf(stderr, "Lua Function dump_mmon() undefined\n");
+    lua_pop(L, 1);
+    go_BYE(-1);
+  }
+  // Push argument to dump_mmon() on stack 
+  lua_pushstring(L, file_name);
+  chk = lua_gettop(L); if ( chk != 2 ) { go_BYE(-1); }
+  // call lua function and check status 
+  status = lua_pcall(L, 1, 1, 0);
+  if ( status != 0 ) {
+    fprintf(stderr, "fn dump_mmon() failed: %s\n", lua_tostring(L, -1));
+    lua_pop(L, 1);
+    go_BYE(-1); 
+  }
+  chk = lua_gettop(L); 
+  if ( chk != 1 ) { go_BYE(-1); }
+  if ( !lua_isboolean(L, 1) ) { go_BYE(-1); } 
+  bool bstatus = lua_toboolean(L, -1);
+  if ( !bstatus ) { WHEREAMI; status = -1; } 
+  // clean up lua stack 
+  lua_pop(L, 1);
+  chk = lua_gettop(L); if ( chk != 0 ) { go_BYE(-1); }
+  //---------------------------------
 BYE:
   return status;
 }
