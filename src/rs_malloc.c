@@ -36,7 +36,11 @@ LUALIB_API void my_openlibs (lua_State *L) {
 
 int
 rs_free(
-    void *X
+    void *X,
+    const char * const file,
+    int line,
+    const char * const func,
+    const char * const label
     )
 {
   int status = 0;
@@ -102,11 +106,14 @@ rs_malloc(
   if ( X == NULL ) { go_BYE(-1); }
   g_mmon.num_malloc++;
   g_mmon.sz_malloc += sz;
-  sprintf(lcmd, "assert(not Tmallocs[%" PRIu64 "])", (uint64_t)X);
+  sprintf(lcmd, 
+      "if ( Tmallocs[%" PRIu64 "] ) then "
+      "Tmallocs[%" PRIu64 "]  = nil end ",
+      (uint64_t)X, (uint64_t)X);
   lexec(L, lcmd);  cBYE(status);
   sprintf(lcmd, "t = {}"); 
   lexec(L, lcmd); 
-  sprintf(lcmd, "t.size = %" PRIu64 "", sz); 
+  sprintf(lcmd, "t.size = %" PRIu64 "", sz);
   lexec(L, lcmd); 
   sprintf(lcmd, "t.file = \"%s\"", file);
   lexec(L, lcmd); 

@@ -10,17 +10,27 @@ mmon_t g_mmon;
 
 #define USE_MEMMON
 #ifdef USE_MEMMON
-#define malloc(x) { rs_malloc(x, __FILE__, __LINE__, __FUNCTION__, "") }
-#define free(x)   { rs_free(x); }
+#define free(x) ( rs_free(x, __FILE__, __LINE__, __FUNCTION__, "") )
+#define malloc(x) ( rs_malloc(x, __FILE__, __LINE__, __FUNCTION__, "") )
 #endif
   
-int
+void *
 foo(
+    int n
     )
 {
+  char *X = malloc(n); 
+  return X;
+}
+
+int
+bar(
+    void *X
+   )
+{
   int status = 0;
-  char *X = malloc(16); 
-  free(X);
+  status = free(X);
+BYE:
   return status;
 }
 
@@ -31,13 +41,22 @@ main(
     )
 {
   int status = 0;
+#define N 10
+  void *X[N];
   status = init_mmon(&g_mmon); cBYE(status);
+  for ( int i = 0; i < N; i++ ) { 
+    X[i] = foo(16);  if ( X == NULL ) { go_BYE(-1); }
+    char fname[32]; sprintf(fname, "_%d_foo.json", i); 
+    status = dump_mmon(&g_mmon, fname); cBYE(status);
+  }
   for ( int i = 0; i < 10; i++ ) { 
-  status = foo(); cBYE(status);
+    status = bar(X[i]); cBYE(status);
+    char fname[32]; sprintf(fname, "_%d_bar.json", i); 
+    status = dump_mmon(&g_mmon, fname); cBYE(status);
   }
   status = chck_mmon(&g_mmon); cBYE(status);
   status = prnt_mmon(&g_mmon); cBYE(status);
-  status = dump_mmon(&g_mmon, "_mmon.json"); cBYE(status);
+  status = dump_mmon(&g_mmon, "_2_mmon.json"); cBYE(status);
   status = stat_mmon(&g_mmon, "_stat.json"); cBYE(status);
   status = free_mmon(&g_mmon); cBYE(status);
   printf("SUCCESS\n");
