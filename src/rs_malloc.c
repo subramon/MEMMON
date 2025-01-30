@@ -106,6 +106,7 @@ rs_malloc(
   if ( X == NULL ) { go_BYE(-1); }
   g_mmon.num_malloc++;
   g_mmon.sz_malloc += sz;
+  // If there was a previous malloc with this address, wipe it out 
   sprintf(lcmd, 
       "if ( Tmallocs[%" PRIu64 "] ) then "
       "Tmallocs[%" PRIu64 "]  = nil end ",
@@ -166,15 +167,17 @@ init_mmon(
   strcat(lcmd, "   local dkj = require('dkjson') "); 
   strcat(lcmd, "   local y = dkj.encode(Tmallocs) ");
   strcat(lcmd, "   local fp = assert(io.open(file_name, 'w')) "); 
-  strcat(lcmd, "   fp:write(y) ");
-  strcat(lcmd, "   fp:close() ");
+  strcat(lcmd, "   fp:write(y); ");
+  strcat(lcmd, "   fp:close(); ");
   strcat(lcmd, "   return true");
   strcat(lcmd, " end");
+  printf("%s \n", lcmd);
   lexec(L, lcmd); cBYE(status);
   lexec(L, "assert(type(dump_mmon) == \"function\")"); cBYE(status);
   // printf("INIT DONE \n");
 
   int chk = lua_gettop(L); 
+  printf("chk = %d \n", chk);
   ptr_M->L =L;
 BYE:
   return status;

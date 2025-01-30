@@ -1,5 +1,7 @@
 /*
-gcc -g -std=gnu99 ut_rs_malloc.c ../../RSUTILS/src/cat_to_buf.c rs_malloc.c -I../..//RSUTILS/inc/   /usr/local/lib/libluajit-5.1.so -I../inc/ -I../../RSUTILS/inc/
+gcc -g -std=gnu99 ut_rs_malloc.c rs_malloc.c \
+  -I../inc/ -I${RSUTILS_SRC_ROOT}/inc/ \
+  /usr/local/lib/libluajit-5.1.so ${RSUTILS_SRC_ROOT}/src/librsutils.so
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,8 +38,8 @@ BYE:
 
 int
 main(
-  int argc,
-  char **argv
+    int argc,
+    char **argv
     )
 {
   int status = 0;
