@@ -60,4 +60,22 @@ stat_mmon(
     mmon_t *ptr_M,
     const char * const file_name
     );
+extern int
+record_malloc_free_per_func(
+    const char * const func,
+    int64_t size,
+    const char * const op
+    );
+extern int 
+get_malloc_free_per_func(
+    const char * const func,
+    int64_t *ptr_sz_malloc,
+    int64_t *ptr_num_malloc,
+    int64_t *ptr_sz_free,
+    int64_t *ptr_num_free
+    );
+extern int 
+pr_malloc_free_per_func(
+    const char * const func
+    );
 #endif //  _RS_MALLOC_H
