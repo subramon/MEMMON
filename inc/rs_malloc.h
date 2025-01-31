@@ -27,10 +27,7 @@ typedef struct _mmon_t {
 
 extern int
 rs_free(
-    void *X,
-    const char * const file,
-    int line,
-    const char * const func
+    void *X
     );
 extern void *
 rs_malloc(

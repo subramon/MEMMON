@@ -5,4 +5,7 @@ Also return how many of these bytes have been freed.
 
 
 
+gdb) call mem_per_func("foo")
 
+
+2000, 1500

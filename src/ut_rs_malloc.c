@@ -12,7 +12,7 @@ mmon_t g_mmon;
 
 #define USE_MEMMON
 #ifdef USE_MEMMON
-#define free(x) ( rs_free(x, __FILE__, __LINE__, __FUNCTION__) )
+#define free(x) ( rs_free(x) )
 #define malloc(x) ( rs_malloc(x, __FILE__, __LINE__, __FUNCTION__) )
 #endif
   
