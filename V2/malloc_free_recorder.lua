@@ -41,7 +41,7 @@ dump_mmon = function(file_name)
 -- given a function name, return amount of mallocs/frees done
 -- this requires another data structure T2
 -- key is function name, value is a table 
--- { sz_malloc, num_malloc, sz_free num_free }
+-- { sz_malloc, num_malloc, sz_free, num_free }
 T2 = {}
 record_malloc_free_per_func = function(func, sz, op)
   assert(type(func) == 'string')
@@ -51,12 +51,11 @@ record_malloc_free_per_func = function(func, sz, op)
   assert((op == "malloc") or ( op == "free"))
   local t = T2[func]
   if ( t == nil ) then
-    print("Adding entry for " .. func)
-    assert(op == "malloc")
+    -- print("Adding entry for " .. func)
+    -- HW: WHY IS THIS ASSERT WRONG? assert(op == "malloc")
     T2[func] = { sz_malloc = sz, num_malloc= 1, sz_free = 0, num_free = 0 } 
     return true
   end 
-  print("Using entry for " .. func)
   assert(type(t) == "table") 
   if ( op == "malloc" ) then
     t.sz_malloc  = t.sz_malloc + sz
@@ -77,5 +76,6 @@ get_malloc_free_per_func = function(func)
    if ( t == nil ) then return 0, 0, 0, 0 end 
    assert(type(t) == "table")
    return t.sz_malloc, t.num_malloc, t.sz_free, t.num_free
- end
+end
 
+assert(type(get_malloc_free_per_func) == "function")

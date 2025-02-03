@@ -12,7 +12,7 @@ mmon_t g_mmon;
 
 #define USE_MEMMON
 #ifdef USE_MEMMON
-#define free(x) ( rs_free(x, __FILE__, __LINE__, __FUNCTION__) )
+#define free(x) ( rs_free(x, __FUNCTION__) )
 #define malloc(x) ( rs_malloc(x, __FILE__, __LINE__, __FUNCTION__) )
 #endif
   
@@ -47,7 +47,7 @@ main(
   status = dump_mmon(&g_mmon, "_init_mmon.json"); cBYE(status);
   status = stat_mmon(&g_mmon,NULL); cBYE(status);
   for ( int i = 0; i < N; i++ ) { 
-    X[i] = foo(16);  if ( X == NULL ) { go_BYE(-1); }
+    X[i] = foo(16);  if ( X[i] == NULL ) { go_BYE(-1); }
     char fname[32]; sprintf(fname, "_%d_foo.json", i); 
     status = dump_mmon(&g_mmon, fname); cBYE(status);
   }
@@ -59,7 +59,10 @@ main(
   status = chck_mmon(&g_mmon); cBYE(status);
   status = stat_mmon(&g_mmon, ""); cBYE(status);
   status = chck_mmon(&g_mmon); cBYE(status);
+  status = pr_malloc_free_per_func("foo");
+  status = pr_malloc_free_per_func("bar");
   status = free_mmon(&g_mmon); cBYE(status);
+
   printf("SUCCESS\n");
 BYE:
   return status;

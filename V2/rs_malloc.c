@@ -110,7 +110,7 @@ stat_mmon(
 
 
 BYE:
-  if ( file_name != NULL ) { 
+  if ( ( file_name != NULL ) && ( *file_name != '\0' ) ) { 
     fclose_if_non_null(fp);
   }
   free_if_non_null(buf);
@@ -178,8 +178,6 @@ BYE:
 int
 rs_free(
     void *X,
-    const char * const file,
-    int line,
     const char * const func
     )
 {
@@ -220,7 +218,7 @@ rs_free(
   if ( g_mmon.sz_free > g_mmon.sz_malloc ) { go_BYE(-1); }
   free(X);
   //- record data for per function profiler 
-  status = record_malloc_free_per_func(func, size, "malloc");
+  status = record_malloc_free_per_func(func, size, "free");
 BYE:
   return status;
 }
@@ -359,13 +357,15 @@ pr_malloc_free_per_func(
   int64_t num_malloc = 0;
   int64_t sz_free = 0;
   int64_t num_free = 0;
+  if ( func == NULL ) { go_BYE(-1); }
   status =  get_malloc_free_per_func(
     func, &sz_malloc, &num_malloc, &sz_free, &num_free);
   cBYE(status);
-  printf("Malloc sz  = %" PRIi64 "\n", sz_malloc);
-  printf("Malloc num = %" PRIi64 "\n", num_malloc);
-  printf("Free   sz  = %" PRIi64 "\n", sz_free);
-  printf("Free   num = %" PRIi64 "\n", num_free);
+  fprintf(stdout, "Statistics for function %s \n", func);
+  fprintf(stdout, "Malloc sz  = %" PRIi64 "\n", sz_malloc);
+  fprintf(stdout, "Malloc num = %" PRIi64 "\n", num_malloc);
+  fprintf(stdout, "Free   sz  = %" PRIi64 "\n", sz_free);
+  fprintf(stdout, "Free   num = %" PRIi64 "\n", num_free);
 BYE:
   return status;
 }
