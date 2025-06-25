@@ -13,14 +13,15 @@ typedef struct _mmon_t {
   uint64_t num_free;
 } mmon_t;
 
-#define Xmalloc(x, y) { \
-  rs_malloc(x, __FILE__, __LINE__, __FUNCTION__, y) \
-}
+#define malloc(x) { rs_malloc(x, __FILE__, __LINE__, __FUNCTION__) }
+#define free(x)   { rs_free(x); }
+
 // Following macro for brevity
 #define lexec(L, s) { \
   status = luaL_dostring(L, s); \
   if ( status != 0 ) {  \
-    fprintf(stderr, "Error luaL_string=%s\n", lua_tostring(L,-1)); \
+    fprintf(stderr, "Failed to execute [%s] \n", s); 
+    fprintf(stderr, "Error = %s\n", lua_tostring(L,-1)); \
   } \
 }
 
@@ -33,8 +34,7 @@ rs_malloc(
     size_t sz,
     const char * const file,
     int line,
-    const char * const func,
-    const char * const label
+    const char * const func
     );
 extern int 
 init_mmon(

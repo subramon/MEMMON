@@ -31,20 +31,21 @@ LUALIB_API void my_openlibs (lua_State *L) {
 }
 //--  STOP: Load as few libraries as possible
 
-
 int
 rs_free(
     void *X
     )
 {
   int status = 0;
-  char lcmd[1024]; memset(lcmd, 0, 1024);  // commands to Lua 
+  char lcmd[4096]; memset(lcmd, 0, 4096);  // commands to Lua 
   lua_State *L = g_mmon.L;
   size_t sz = 0;
   // Check if X is valid pointer. 
   sprintf(lcmd, "assert(Tmallocs[%" PRIu64 "])", (uint64_t)X);
   lexec(L, lcmd);  cBYE(status);
+  /*
   lexec(L, " for k1, v1 in pairs(Tmallocs) do for k2, v2 in pairs(v1) do print(k1, k2, v2) end end "); cBYE(status);
+  */
   //-- Get the size of the memory pointed to by this pointer 
   // Put lua function get_size() on stack 
   int chk = lua_gettop(L); if ( chk != 0 ) { go_BYE(-1); }
@@ -87,8 +88,7 @@ rs_malloc(
     size_t sz,
     const char * const file,
     int line,
-    const char * const func,
-    const char * const label
+    const char * const func
     )
 {
   int status =  0;
@@ -132,28 +132,31 @@ init_mmon(
     )
 {
   int status = 0;
+  char lcmd[4096]; memset(lcmd, 0, 4096);  // commands to Lua 
   lua_State *L = NULL;
   memset(ptr_M, 0, sizeof(mmon_t));
+
   L = luaL_newstate(); if ( L == NULL ) { go_BYE(-1); }
   my_openlibs(L);
-  char lcmd[1024]; memset(lcmd, 0, 1024);  // commands to Lua 
 
   strcpy(lcmd, "Tmallocs = {}");
   lexec(L, lcmd); cBYE(status); 
 
-  strcpy(lcmd, " get_size = function(x) ");
-  strcat(lcmd, "   assert(type(x) == \"number\")");
-  strcat(lcmd, "   local t = assert(Tmallocs[x])");
-  strcat(lcmd, "   assert(type(t) == \"table\")");
-  strcat(lcmd, "   local sz = assert(t.size)");
-  strcat(lcmd, "   assert(type(sz) == \"number\")");
-  strcat(lcmd, "   return sz");
-  strcat(lcmd, " end");
-  lexec(L, lcmd); cBYE(status);
+  const char * func_defn = 
+    " get_size = function(x) " 
+    "   assert(type(x) == \"number\"); "
+    "   local t = assert(Tmallocs[x]); "
+    "   assert(type(t) == \"table\"); "
+    "   local sz = assert(t.size); "
+    "   assert(type(sz) == \"number\"); "
+    "   return sz "
+    " end"
+  lexec(L, func_defn); cBYE(status);
   lexec(L, "assert(type(get_size) == \"function\")"); cBYE(status);
   // printf("INIT DONE \n");
 
   int chk = lua_gettop(L); 
+  if ( chk != 0 ) { go_BYE(-1); } 
   ptr_M->L =L;
 BYE:
   return status;
@@ -167,7 +170,8 @@ chck_mmon(
   int status = 0;
   if ( ptr_M == NULL ) { go_BYE(-1); }
   if ( ptr_M->L == NULL ) { go_BYE(-1); }
-  if ( ptr_M->sz_malloc !=ptr_M->sz_free ) { go_BYE(-1); }
+  if ( ptr_M->sz_malloc != ptr_M->sz_free ) { go_BYE(-1); }
+  if ( ptr_M->num_malloc != ptr_M->num_free ) { go_BYE(-1); }
 BYE:
   return status;
 }
