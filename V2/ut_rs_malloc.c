@@ -1,5 +1,5 @@
 /*
-gcc -g -std=gnu99 ut_rs_malloc.c rs_malloc.c \
+gcc -g -Wall -std=gnu99 ut_rs_malloc.c rs_malloc.c \
   -I../inc/ -I${RSUTILS_SRC_ROOT}/inc/ \
   /usr/local/lib/libluajit-5.1.so ${RSUTILS_SRC_ROOT}/src/librsutils.so
  */
@@ -25,15 +25,12 @@ foo(
   return X;
 }
 
-int
+void
 bar(
     void *X
    )
 {
-  int status = 0;
-  status = free(X);
-BYE:
-  return status;
+  free(X);
 }
 
 int
@@ -50,19 +47,22 @@ main(
   status = dump_mmon(&g_mmon, "_init_mmon.json"); cBYE(status);
   status = stat_mmon(&g_mmon,NULL); cBYE(status);
   for ( int i = 0; i < N; i++ ) { 
-    X[i] = foo(16);  if ( X == NULL ) { go_BYE(-1); }
+    X[i] = foo(16);  if ( X[i] == NULL ) { go_BYE(-1); }
     char fname[32]; sprintf(fname, "_%d_foo.json", i); 
     status = dump_mmon(&g_mmon, fname); cBYE(status);
   }
   for ( int i = 0; i < 10; i++ ) { 
-    status = bar(X[i]); cBYE(status);
+    bar(X[i]); 
     char fname[32]; sprintf(fname, "_%d_bar.json", i); 
     status = dump_mmon(&g_mmon, fname); cBYE(status);
   }
   status = chck_mmon(&g_mmon); cBYE(status);
   status = stat_mmon(&g_mmon, ""); cBYE(status);
   status = chck_mmon(&g_mmon); cBYE(status);
+  status = pr_malloc_free_per_func("foo");
+  status = pr_malloc_free_per_func("bar");
   status = free_mmon(&g_mmon); cBYE(status);
+
   printf("SUCCESS\n");
 BYE:
   return status;
