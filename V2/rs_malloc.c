@@ -40,6 +40,7 @@ init_mmon(
     )
 {
   int status = 0;
+  char *lcmd = NULL; size_t len = 0; 
   lua_State *L = NULL;
   memset(ptr_M, 0, sizeof(mmon_t));
   L = luaL_newstate(); if ( L == NULL ) { go_BYE(-1); }
@@ -47,7 +48,7 @@ init_mmon(
 
   const char *lua_file = "malloc_free_recorder.lua"; // TODO hard coded
 
-  char *lcmd = file_as_str(lua_file); 
+  status = file_as_str(lua_file, &lcmd, &len); cBYE(status);
   if ( lcmd == NULL ) { go_BYE(-1); }
   mcr_lexec(L, lcmd); cBYE(status); 
 
@@ -66,6 +67,7 @@ chck_mmon(
   int status = 0;
   if ( ptr_M == NULL ) { go_BYE(-1); }
   if ( ptr_M->L == NULL ) { go_BYE(-1); }
+  mcr_lexec(ptr_M->L, "assert(type(T1) == \"table\")"); cBYE(status); 
   if ( ptr_M->sz_malloc < 0 ) { go_BYE(-1); }
   if ( ptr_M->sz_malloc < ptr_M->sz_free ) { go_BYE(-1); }
 BYE:
@@ -140,7 +142,6 @@ dump_mmon(
 {
   int status = 0;
   if ( ptr_M == NULL ) { go_BYE(-1); }
-  if ( file_name == NULL ) { go_BYE(-1); }
   lua_State *L = ptr_M->L;
 
   // Put lua function dump_mmon() on stack 
@@ -153,7 +154,12 @@ dump_mmon(
     go_BYE(-1);
   }
   // Push argument to dump_mmon() on stack 
-  lua_pushstring(L, file_name);
+  if ( file_name == NULL ) { 
+    lua_pushnil(L);
+  }
+  else { 
+    lua_pushstring(L, file_name);
+  }
   chk = lua_gettop(L); if ( chk != 2 ) { go_BYE(-1); }
   // call lua function and check status 
   status = lua_pcall(L, 1, 1, 0);

@@ -6,14 +6,15 @@ gcc -g -Wall -std=gnu99 ut_rs_malloc.c rs_malloc.c \
 #include <stdio.h>
 #include <stdlib.h>
 #include "q_macros.h"
-#include "rs_malloc.h"
 
-mmon_t g_mmon;
 
 #define USE_MEMMON
 #ifdef USE_MEMMON
-#define free(x) ( rs_free(x, __FUNCTION__) )
-#define malloc(x) ( rs_malloc(x, __FILE__, __LINE__, __FUNCTION__) )
+#include "rs_malloc.h"
+mmon_t g_mmon;
+#else
+#define xmalloc(sz) ( malloc(sz) )
+#define xfree(ptr) ( free(ptr) )
 #endif
   
 void *
@@ -21,7 +22,7 @@ foo(
     int n
     )
 {
-  char *X = malloc(n); 
+  char *X = xmalloc(n); 
   return X;
 }
 
@@ -30,7 +31,7 @@ bar(
     void *X
    )
 {
-  free(X);
+  xfree(X);
 }
 
 int

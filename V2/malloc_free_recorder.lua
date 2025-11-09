@@ -18,6 +18,7 @@ record_free = function(addr)
   -- addr is the address that is being freed (as a 64 bit number)
   assert(type(addr) == "number")
   -- cannot free something that was not recorded in T1. hence, assert
+  assert(type(T1) == "table")
   local t = assert(T1[addr])
   assert(type(t) == "table")
   local sz = assert(t.size)
@@ -28,13 +29,19 @@ record_free = function(addr)
 end
 --===============================================
 dump_mmon = function(file_name)
-   assert(type(file_name) == 'string')
    -- need to do sudo luarocks install dkjson
    local dkj = require('dkjson') 
    local y = dkj.encode(T1) 
-   local fp = assert(io.open(file_name, 'w')) 
-   fp:write(y); 
-   fp:close(); 
+   if ( type(file_name) == "string" ) then 
+     local fp = assert(io.open(file_name, 'w')) 
+     fp:write(y); 
+     fp:close(); 
+   elseif ( type(file_name) == "nil" ) then  -- write to stdout
+     io.write(y)
+   else
+     error("XX")
+   end
+
    return true
  end
 --===============================================
