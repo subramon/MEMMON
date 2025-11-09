@@ -56,6 +56,7 @@ init_mmon(
   if ( chk != 0 ) { go_BYE(-1); }
   ptr_M->L =L;
 BYE:
+  free_if_non_null(lcmd);
   return status;
 }
 //-------------------------------------------------------
