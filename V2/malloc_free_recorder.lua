@@ -14,7 +14,7 @@ record_malloc = function(addr, size, file, line, func)
   return true
 end
 
-record_free = function(addr) 
+record_free = function(addr, file, line, func)
   -- addr is the address that is being freed (as a 64 bit number)
   assert(type(addr) == "number")
   -- cannot free something that was not recorded in T1. hence, assert

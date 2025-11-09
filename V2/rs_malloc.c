@@ -185,6 +185,8 @@ BYE:
 int
 rs_free(
     void *X,
+    const char * const file,
+    int line,
     const char * const func
     )
 {

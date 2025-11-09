@@ -15,7 +15,7 @@ typedef struct _mmon_t {
 } mmon_t;
 
 #define xmalloc(s) ( rs_malloc(s, __FILE__, __LINE__, __FUNCTION__)  )
-#define xfree(x)   ( rs_free(x, __FUNCTION__) )
+#define xfree(x)   ( rs_free(x, __FILE__, __LINE__, __FUNCTION__) )
 
 // Following macro for brevity
 #define mcr_lexec(L, s) { \
@@ -29,6 +29,8 @@ typedef struct _mmon_t {
 extern int
 rs_free(
     void *X,
+    const char * const file,
+    int line,
     const char * const func
     );
 extern void *
